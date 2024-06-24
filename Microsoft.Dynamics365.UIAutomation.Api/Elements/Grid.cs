@@ -141,7 +141,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
                         continue;
                     if (!driver.HasElement(viewItem.Locator + "//label")) continue;
                     var key = viewItem.Text.ToLowerString();
-
+                    Trace.TraceInformation(String.Format("Grid.OpenViewPicker view name '", key, "'"));
                     if (string.IsNullOrWhiteSpace(key))
                         continue;
 

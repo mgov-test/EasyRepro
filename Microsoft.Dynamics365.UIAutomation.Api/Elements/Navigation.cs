@@ -31,12 +31,13 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             private string _SiteMapLauncherCloseButton = "//button[@data-id='navbutton']";
             private string _SiteMapAreaMoreButton = "//li[translate(@data-text,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz') = '[NAME]']";
             private string _SiteMapSingleArea = "//*[@id=\"taskpane-scroll-container\"]";
-            private string _AppMenuContainer = "//button[@data-id='[NAME]Launcher']";
+            private string _AppMenuContainer = "//a[@title='[NAME]']";
             private string _SettingsLauncherBar = "//button[@data-id='[NAME]Launcher']";
             private string _SettingsLauncher = "//ul[@data-id='[NAME]Launcher']";
             //private string SettingsLauncher = "//button[@data-id='[NAME]Launcher']";
             private string _AccountManagerButton = "//*[@id=\"mectrl_main_trigger\"]";
             private string _AccountManagerSignOutButton = "//*[@id=\"mectrl_body_signOut\"]";
+            private string _GlobalSearchbox = "//*[@id='GlobalSearchBox']";
             private string _GuidedHelp = "//*[@id=\"helpLauncher\"]/button";
             private string _AdminPortal = "//*[contains(@data-id,'officewaffle')]";
             private string _AdminPortalButton = "//*[@id=(\"O365_AppTile_Admin\")]";
@@ -74,6 +75,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             //public string SettingsLauncher = "//button[@data-id='[NAME]Launcher']";
             public string AccountManagerButton { get => _AccountManagerButton; set { _AccountManagerButton = value; } }
             public string AccountManagerSignOutButton { get => _AccountManagerSignOutButton; set { _AccountManagerSignOutButton = value; } }
+            public string GlobalSearchbox { get => _GlobalSearchbox; set { _GlobalSearchbox = value; } }
             public string GuidedHelp { get => _GuidedHelp; set { _GuidedHelp = value; } }
             public string AdminPortal { get => _AdminPortal; set { _AdminPortal = value; } }
             public string AdminPortalButton { get => _AdminPortalButton; set { _AdminPortalButton = value; } }
@@ -300,7 +302,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             return _client.Execute(_client.GetOptions($"Open App {appName}"), driver =>
             {
                 driver.Wait(PageEvent.Load);
-                driver.SwitchToFrame("0");
+                //driver.SwitchToFrame("0"); //Selenium
+                driver.SwitchToFrame("AppLandingPage"); //Playwright
 
                 var query = GetUrlQueryParams(driver.Url);
                 bool isSomeAppOpen = query.Get("appid") != null || query.Get("app") != null;
@@ -348,13 +351,14 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// <example>xrmBrowser.Navigation.OpenGlobalSearch();</example>
         public BrowserCommandResult<bool> OpenGlobalSearch(int thinkTime = Constants.DefaultThinkTime)
         {
+            Trace.TraceInformation("Navigation.OpenGlobalSearch initiated.");
             _client.ThinkTime(thinkTime);
 
             return _client.Execute(_client.GetOptions($"Open Global Search"), driver =>
             {
             driver.Wait();
 
-            if (driver.HasElement("//*[@id='GlobalSearchBox']"));
+            if (driver.HasElement(_client.ElementMapper.NavigationReference.GlobalSearchbox))
                 {
                     return true;
                 }
@@ -555,10 +559,11 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         //}
         internal bool OpenAppFromMenu(IWebBrowser driver, string appName)
         {
+            Trace.TraceInformation("Entered Navigation.OpenAppFromMenu");
             var container = driver.WaitUntilAvailable(_client.ElementMapper.NavigationReference.AppMenuContainer.Replace("[NAME]", appName));
-            var xpathToButton = "//nav[@aria-hidden='false']//button//*[text()='[TEXT]']".Replace("[TEXT]", appName);
-            var button = driver.ClickWhenAvailable(container.Locator + xpathToButton,
-                                TimeSpan.FromSeconds(1), "Cannot click button to open app from menu. XPath: '" + container.Locator + xpathToButton + "'"
+            //var xpathToButton = "//nav[@aria-hidden='false']//button//*[text()='[TEXT]']".Replace("[TEXT]", appName);
+            var button = driver.ClickWhenAvailable(container.Locator,
+                                TimeSpan.FromSeconds(1), "Cannot click button to open app from menu. XPath: '" + container.Locator + "'"
                             );
 
             var success = (button != null);
@@ -770,19 +775,19 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         }
         private bool TryOpenAppFromMenu(IWebBrowser driver, string appName, string appMenuButton)
         {
+            Trace.TraceInformation("Entered Navigation.TryOpenAppFromMenu");
             bool found = false;
-            var xpathToAppMenu = _client.ElementMapper.NavigationReference.AppMenuButton;
-            driver.Wait(new TimeSpan(0, 0, 5));
-            var appClicked = driver.ClickWhenAvailable(xpathToAppMenu);
-            //if (appClicked) driver.FindElement(xpathToAppMenu).Click(_client);
-            //app.Click(_client);
-            found = TryToClickInAppTile(appName, driver) || OpenAppFromMenu(driver, appName);
-            //driver.WaitUntilClickable(xpathToAppMenu, 5.Seconds(),
-            //            appMenu =>
-            //            {
-            //                appMenu.Click(true);
-            //                found = TryToClickInAppTile(appName, driver) || OpenAppFromMenu(driver, appName);
-            //            });
+            if (driver.HasElement(_client.ElementMapper.NavigationReference.AppMenuButton))
+            {
+                var appClicked = driver.ClickWhenAvailable(_client.ElementMapper.NavigationReference.AppMenuButton);
+                driver.Wait(new TimeSpan(0, 0, 15));
+                found = TryToClickInAppTile(appName, driver) || OpenAppFromMenu(driver, appName);
+            }
+            else
+            {
+                Trace.TraceWarning("AppMenu not found. XPath: " + _client.ElementMapper.NavigationReference.AppMenuButton);
+            }
+
             return found;
         }
         private bool TryOpenSubArea(IWebBrowser driver, string subarea)
@@ -815,35 +820,19 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         }
         private bool TryToClickInAppTile(string appName, IWebBrowser driver)
         {
+            Trace.TraceInformation("Entered Navigation.TryToClickInAppTile");
             string message = "Frame AppLandingPage is not loaded.";
             driver.SwitchToFrame("AppLandingPage");
-            //driver.WaitUntil(
-            //    d =>
-            //    {
-            //        try
-            //        {
-            //            driver.SwitchTo().Frame("AppLandingPage");
-            //        }
-            //        catch (NoSuchFrameException ex)
-            //        {
-            //            message = $"{message} Exception: {ex.Message}";
-            //            Trace.TraceWarning(message);
-            //            return false;
-            //        }
-            //        return true;
-            //    },
-            //    5.Seconds()
-            //    );
+
 
             var xpathToAppContainer = _client.ElementMapper.NavigationReference.AppContainer;
             var xpathToappTile = _client.ElementMapper.NavigationReference.AppTile.Replace("[NAME]", appName);
 
             bool success = false;
-            var appContainer = driver.WaitUntilAvailable(xpathToAppContainer);
-            success = driver.ClickWhenAvailable(appContainer.Locator + xpathToappTile, TimeSpan.FromSeconds(5)) != null;
-            //driver.WaitUntilVisible(xpathToAppContainer, TimeSpan.FromSeconds(5),
-            //    appContainer => success = appContainer.ClickWhenAvailable(xpathToappTile, TimeSpan.FromSeconds(5)) != null
-            //    );
+            if (driver.HasElement(xpathToAppContainer)) { 
+                var appContainer = driver.FindElement(xpathToAppContainer);
+                success = driver.ClickWhenAvailable(appContainer.Locator + xpathToappTile, TimeSpan.FromSeconds(5)) != null;
+            }
 
             if (!success)
                 Trace.TraceWarning(message);

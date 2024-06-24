@@ -14,8 +14,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         public class LookupReference
         {
             public const string Lookup = "Lookup";
-            private string _relatedEntityLabel = "//li[contains(@aria-label,'[NAME]') and contains(@data-id,'LookupResultsDropdown')]";
-            private string _advancedLookupButton = "//button[.//label[text()='Advanced lookup']]";
+            private string _relatedEntityLabel = "//button[contains(@aria-label,'[NAME]') and contains(@data-id,'LookupResultsDropdown')]";
+            private string _advancedLookupButton = "//a[@aria-label='Advanced lookup']"; //"//button[.//label[text()='Advanced lookup']]";
             private string _viewRows = "//li[contains(@data-id,'viewLineContainer')]";
             private string _lookupResultRows = "//li[contains(@data-id,'LookupResultsDropdown') and contains(@data-id,'resultsContainer')]";
             private string _newButton = "//button[contains(@data-id,'addNewBtnContainer') and contains(@data-id,'LookupResultsDropdown')]";
@@ -32,6 +32,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         public class AdvancedLookupReference
         {
             public const string AdvancedLookup = "AdvancedLookup";
+            //parentcustomerid.fieldControl-LookupResultsDropdown_parentcustomerid_advancedLookupBtnContainer
+            private string _launchButton = "//a[contains(@data-id, 'advancedLookupBtnContainer')]";
             private string _container = ".//div[contains(@data-lp-id, 'MscrmControls.FieldControls.AdvancedLookupControl')]";
             private string _searchInput = "//input[@type='text' and @placeholder='Search']";
             private string _resultRows = "//div[@ref='eLeftContainer']//div[@role='row']";
@@ -45,6 +47,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             private string _viewDropdownList = ".//div[contains(@class, 'dropdownItemsWrapper')]";
             private string _viewDropdownListItem = "//button[.//span[text()='[NAME]']]";
 
+            public string LaunchButton { get => _launchButton; set { _launchButton = value; } }
             public string Container { get => _container; set { _container = value; } }
             public string SearchInput { get => _searchInput; set { _searchInput = value; } }
             public string ResultRows { get => _resultRows; set { _resultRows = value; } }
@@ -390,6 +393,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> OpenLookupRecord(int index)
         {
+            Trace.TraceInformation("Lookup.OpenLookupRecord initiated.");
             return _client.Execute(_client.GetOptions("Select Lookup Record"), driver =>
             {
                 driver.Wait();
@@ -470,6 +474,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> SelectLookupRelatedEntity(string entityName)
         {
+            Trace.TraceInformation("Lookup.SelectLookupRelatedEntity inititaed.");
             // Click the Related Entity on the Lookup Flyout
             return _client.Execute(_client.GetOptions($"Select Lookup Related Entity {entityName}"), driver =>
             {
@@ -506,20 +511,29 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> SwitchLookupView(string viewName)
         {
+            Trace.TraceInformation("Lookup.SwitchLookupView inititaed with viewName " + viewName);
             return _client.Execute(_client.GetOptions($"Select Lookup View {viewName}"), driver =>
             {
-                var advancedLookup = driver.WaitUntilAvailable(
-                    _client.ElementMapper.AdvancedLookupReference.Container,
-                    2.Seconds(), "Switch Lookup View is not available. XPath: '" + _client.ElementMapper.AdvancedLookupReference.Container + "'");
-
-                if (advancedLookup == null)
+                if (driver.HasElement(_client.ElementMapper.AdvancedLookupReference.Container))
                 {
                     SelectLookupAdvancedLookupButton();
-                    advancedLookup = driver.WaitUntilAvailable(
+                    driver.WaitUntilAvailable(
                         _client.ElementMapper.AdvancedLookupReference.Container,
                         2.Seconds(),
                         "Expected Advanced Lookup dialog but it was not found.");
-                }   
+                }
+                //var advancedLookup = driver.WaitUntilAvailable(
+                //    _client.ElementMapper.AdvancedLookupReference.Container,
+                //    2.Seconds(), "Switch Lookup View is not available. XPath: '" + _client.ElementMapper.AdvancedLookupReference.Container + "'");
+
+                //if (advancedLookup == null)
+                //{
+                //    SelectLookupAdvancedLookupButton();
+                //    advancedLookup = driver.WaitUntilAvailable(
+                //        _client.ElementMapper.AdvancedLookupReference.Container,
+                //        2.Seconds(),
+                //        "Expected Advanced Lookup dialog but it was not found.");
+                //}   
 
                 driver
                     .FindElement(_client.ElementMapper.AdvancedLookupReference.Container + _client.ElementMapper.AdvancedLookupReference.ViewSelectorCaret)
@@ -541,6 +555,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> SelectLookupAdvancedLookupButton()
         {
+            Trace.TraceInformation("Lookup.SelectLookupAdvancedLookupButton inititaed.");
             return _client.Execute(_client.GetOptions("Click Advanced Lookup Button"), driver =>
             {
                 driver.ClickWhenAvailable(
@@ -556,6 +571,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> SelectLookupNewButton()
         {
+            Trace.TraceInformation("Lookup.SelectLookupNewButton inititaed.");
             return _client.Execute(_client.GetOptions("Click New Lookup Button"), driver =>
             {
                 driver.Wait();

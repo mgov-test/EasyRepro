@@ -3,7 +3,7 @@ The purpose of this library is to provide Dynamics customers the ability to faci
 
 ## Breaking Changes from earlier versions of Easy Repro
 The impact to all tests is extremely minimal. In the case there is a potential breaking change, please review the section below.
-### Migraiton to .NET Core 
+### Migration to .NET Core  
 This version of Easy Repro uses .NET Core 6. Previous versions used .NET Framework 4.6.1. This impacts how configuration for tests are retrieved.
 All tests have been updated showing how to use the runsettings file in combination with the ClassInitialize attribute.
 [ClassInitialize(InheritanceBehavior.BeforeEachDerivedClass)]
@@ -85,6 +85,8 @@ Change the keys in your `app.config` below to match your environment. Open the T
 <add key="OnlineUsername" value="name@name.onmicrosoft.com" />
 <add key="OnlinePassword" value="*********" />
 <add key="OnlineCrmUrl" value="https://org.crm.dynamics.com/" />
+<add key="Framework" value="Selenium" />
+// <add key="Framework" value="Playwright" />
 ```
 
 #### MFA Support

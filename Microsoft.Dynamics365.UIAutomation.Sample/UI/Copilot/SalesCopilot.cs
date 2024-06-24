@@ -8,9 +8,9 @@ using System;
 using System.Security;
 using Microsoft.Dynamics365.UIAutomation.Api;
 
-namespace Microsoft.Dynamics365.UIAutomation.Sample.CustomerService
+namespace Microsoft.Dynamics365.UIAutomation.Sample.Sales
 {
-    public static class CustomerServiceCopilot
+    public static class SalesCopilot
     {
         public static string controlId = "AppSidePane_MscrmControls.CSIntelligence.AICopilotControl";
         public static string controlButtonId = "sidepane-tab-button-AppSidePane_MscrmControls.CSIntelligence.AICopilotControl";
@@ -27,10 +27,10 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample.CustomerService
     }
 
     [TestClass]
-    public class EngageCopilot : TestsBase
+    public class SalesCopilotTests : TestsBase
     {
 
-        [TestCategory("Customer Service Workspace")]
+        [TestCategory("Sales Hub")]
         [TestCategory("Copilot")]
         [TestMethod]
         public void CustomerServiceCopilot_AskAQuestion()

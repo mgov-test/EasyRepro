@@ -15,6 +15,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
     [TestClass]
     public class CreateAccount : TestsBase
     {
+        [TestCategory("SeleniumTested")]
         [TestCategory("Entity")]
         [TestMethod]
         public void TestCreateAccount()
@@ -35,7 +36,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
                 xrmApp.Entity.SetValue("name", TestSettings.GetRandomString(5,15));
 
                 xrmApp.Entity.Save();
-                
+
             }
             
         }

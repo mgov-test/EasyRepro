@@ -3,10 +3,13 @@ using Microsoft.Playwright;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+
 //using PlaywrightSharp;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Microsoft.Dynamics365.UIAutomation.Browser
 {
@@ -27,7 +30,20 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
 
         public BrowserOptions Options { get { return _options; } set { _options = value; } }
 
-        public string Url { get { return _url; } set { _url = value; } }
+        public string Url
+        {
+            get
+            {
+                try
+                {
+                   return _page.EvaluateAsync("document.location.href").Result.ToString();
+                }
+                catch (AggregateException ex)
+                {
+
+                    return _page.Url;
+                }
+            } set { _url = value; } }
 
         #region FindElement
         public IElement FindElement(string selector)
@@ -84,7 +100,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
 
         public void SendKey(string selector, string key)
         {
-            _page.Keyboard.TypeAsync(key);
+            Trace.TraceInformation("[Playwright] Browser send key inititated. Key: " + key);
+            _page.Keyboard.PressAsync(key);
         }
 
         public void SendKeys(string selector, string[] keys)
@@ -93,9 +110,20 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         }
         #endregion
         #region Navigate
+        //https://playwright.dev/docs/navigations
         public void Navigate(string url)
         {
+            Trace.TraceInformation("[Playwright] Browser navigate inititated. URL: " + url);
             _page.GotoAsync(url).GetAwaiter().GetResult();
+            try
+            {
+                _page.WaitForLoadStateAsync(LoadState.NetworkIdle).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("[Playwright] Browser navigate error. URL: " + url + ". Error: " + ex.Message);
+            }
+
         }
         public async void NavigateAsync(string url)
         {
@@ -107,7 +135,29 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
 
         public void SwitchToFrame(string name, IElement? frameElement = null)
         {
-            _page.Frame(name).WaitForLoadStateAsync();
+            Trace.TraceInformation("[Playwright] Browser SwitchToFrame inititated. Name: " + name);
+            try
+            {
+                if (frameElement != null)
+                {
+                    throw new NotImplementedException();
+                }
+
+                if (int.TryParse(name, out var frame))
+                {
+                    _page.Frames[frame].WaitForLoadStateAsync(LoadState.NetworkIdle);
+                }
+                else
+                {
+                    _page.Frame(name).WaitForLoadStateAsync(LoadState.NetworkIdle);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("[Playwright] Browser SwitchToFrame error. Name: " + name + ". Error: " + ex.Message);
+            }
+
+
         }
 
 
@@ -128,8 +178,19 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         #region HasElement
         public bool HasElement(string selector)
         {
-            var hasElement = GetElement(selector);
-            return (hasElement != null) ? true : false;
+            Trace.TraceInformation("[Playwright] Browser has element inititated. XPath: " + selector);
+            if (_page.QuerySelectorAsync(selector).GetAwaiter().GetResult() == null)
+            {
+                return false;
+            }
+            else if (_page.QuerySelectorAllAsync(selector).GetAwaiter().GetResult().Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return this.GetElement(selector).IsAvailable;
+            }
         }
         #endregion
 
@@ -150,6 +211,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         }
         private void ThinkTime(int milliseconds)
         {
+            Trace.TraceInformation("[Playwright] ThinkTime inititated. Milliseconds: " + milliseconds);
             Thread.Sleep(milliseconds);
         }
         #endregion
@@ -176,12 +238,6 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
             return GetElement(selector);
         }
 
-        //public IElement? WaitUntilAvailable(string selector)
-        //{
-        //    _page.WaitForLoadStateAsync(LoadState.NetworkIdle).GetAwaiter().GetResult();
-        //    //_page.WaitForLoadStateAsync(LifecycleEvent.Networkidle).GetAwaiter().GetResult();
-        //    //_page.WaitForSelectorAsync(selector,).GetAwaiter().GetResult();
-        //}
 
         public IElement WaitUntilAvailable(string selector, TimeSpan timeToWait, string exceptionMessage)
         {
@@ -230,12 +286,46 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         #region WaitForSelector
         internal void WaitForSelector(string selector)
         {
-            _page.WaitForLoadStateAsync(LoadState.NetworkIdle).GetAwaiter().GetResult();
-            //_page.WaitForLoadStateAsync(LifecycleEvent.Networkidle).GetAwaiter().GetResult();
-            _page.WaitForSelectorAsync(selector,new PageWaitForSelectorOptions()
+            Trace.TraceInformation("[Playwright] Browser WaitForSelector inititated. XPath: " + selector);
+            try
             {
-               State = WaitForSelectorState.Visible
-            }).GetAwaiter().GetResult();
+                _page.WaitForLoadStateAsync(LoadState.NetworkIdle).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+
+                Trace.TraceError("[Playwright] Error in WaitForSelector. XPath: " + selector + ". Error: " + ex.Message);
+            }
+
+            try
+            {
+                IElementHandle element = _page.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+                if (element == null)
+                {
+                    foreach(var frame in _page.Frames)
+                    {
+                        element = frame.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+                        if (element != null)
+                        {
+                            this.SwitchToFrame(frame.Name);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    _page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions()
+                    {
+                        State = WaitForSelectorState.Visible
+                    }).GetAwaiter().GetResult();
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
 
         internal void WaitForSelector(string selector, PageWaitForSelectorOptions options)
@@ -256,15 +346,25 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         #region GetElement
         private IElement GetElement(string selector)
         {
-            IElementHandle playWrightElement = _page.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+            Trace.TraceInformation("[Playwright] Browser get element inititated. XPath: " + selector);
+            ILocator playWrightElement = _page.Locator(selector);
             if (playWrightElement == null) { throw new PlaywrightException(String.Format("Could not find element using selector '{0}'", selector)); }
-            return (IElement)playWrightElement;
+            return playWrightElement.ToElement(_page,selector);
         }
         private List<IElement> GetElements(string selector)
         {
-            IList<IElementHandle> playWrightElements = (IList<IElementHandle>)_page.QuerySelectorAllAsync(selector).GetAwaiter().GetResult();
-            if (playWrightElements == null) { throw new PlaywrightException(String.Format("Could not find element using selector '{0}'", selector)); }
-            return new List<IElement>(playWrightElements.Select(x => (IElement)x));
+            Trace.TraceInformation("[Playwright] Browser get elements inititated. XPath: " + selector);
+            //IReadOnlyList<IElementHandle> playWrightElements = (IReadOnlyList<IElementHandle>)_page.QuerySelectorAllAsync(selector).GetAwaiter().GetResult();
+
+            IReadOnlyList<ILocator> locator = _page.Locator(selector).AllAsync().Result;
+
+            if (locator == null) { throw new PlaywrightException(String.Format("Could not find element using selector '{0}'", selector)); }
+            List<IElement> elements = new List<IElement>();
+            foreach(var element in locator)
+            {
+                elements.Add(element.ToElement(_page, selector));
+            }
+            return elements;
         }
         #endregion
 
@@ -296,21 +396,50 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         {
             //throw new NotImplementedException();
             ILocator locator = _page.Locator(selector);
-            locator.ClickAsync(new LocatorClickOptions()
+            IElementHandle element = _page.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+            if (element == null)
             {
+                foreach (var frame in _page.Frames)
+                {
+                    element = frame.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+                    if (element != null)
+                    {
+                        this.SwitchToFrame(frame.Name);
+                        locator = _page.Locator(selector);
+                        element = frame.QuerySelectorAsync(selector).GetAwaiter().GetResult();
+                        frame.ClickAsync(selector).GetAwaiter().GetResult();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                locator.ClickAsync(new LocatorClickOptions()
+                {
 
-            }).GetAwaiter().GetResult();
+                }).GetAwaiter().GetResult();
+            }
+
             return true;
         }
 
         public bool ClickWhenAvailable(string selector)
         {
+            Trace.TraceInformation("[Playwright] Browser ClickWhenAvailable inititated. XPath: " + selector);
             ILocator locator = _page.Locator(selector);
-            locator.ClickAsync(new LocatorClickOptions()
+            try
+            {
+                locator.ClickAsync(new LocatorClickOptions()
+                {
+
+                }).GetAwaiter().GetResult();
+                return true;
+            }
+            catch (Exception)
             {
 
-            }).GetAwaiter().GetResult();
-            return true;
+                return false;
+            }
         }
 
 

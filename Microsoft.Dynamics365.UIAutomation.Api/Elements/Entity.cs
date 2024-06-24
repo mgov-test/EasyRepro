@@ -280,7 +280,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// <example>xrmApp.Entity.CloseRecordSetNavigator();</example>
         public void CloseRecordSetNavigator()
         {
-            this.CloseRecordSetNavigator();
+            this.EntityCloseRecordSetNavigator();
         }
 
         /// <summary>
@@ -963,6 +963,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             });
         }
 
+        #region Record Set Navigator
         /// <summary>
         /// Open record set and navigate record index.
         /// This method supersedes Navigate Up and Navigate Down outside of UI 
@@ -972,19 +973,19 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// <example>xrmBrowser.Entity.OpenRecordSetNavigator();</example>
         public BrowserCommandResult<bool> EntityOpenRecordSetNavigator(int index = 0, int thinkTime = Constants.DefaultThinkTime)
         {
+            Trace.TraceInformation("Entity.EntityOpenRecordSetNavigator initiated.");
             _client.ThinkTime(thinkTime);
 
             return _client.Execute(_client.GetOptions("Open Record Set Navigator"), driver =>
             {
                 // check if record set navigator parent div is set to open
-                driver.Wait();
+                _client.ThinkTime(thinkTime);
 
                 if (!driver.HasElement(this._entityReference.RecordSetNavList))
                 {
-                    var navList = driver.FindElement(this._entityReference.RecordSetNavList);
                     driver.FindElement(this._entityReference.RecordSetNavigator).Click(_client);
-                    driver.Wait();
-                    navList = driver.FindElement(this._entityReference.RecordSetNavList);
+                    _client.ThinkTime(thinkTime);
+                    var navList = driver.FindElement(this._entityReference.RecordSetNavList);
                 }
 
                 var links = driver.FindElements(this._entityReference.RecordSetNavList + "//li");
@@ -998,7 +999,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
                     throw new InvalidOperationException($"No record with the index '{index}' exists.");
                 }
 
-                driver.Wait();
+                _client.ThinkTime(thinkTime);
 
                 return true;
             });
@@ -1009,8 +1010,9 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// </summary>
         /// <param name="thinkTime"></param>
         /// <example>xrmApp.Entity.CloseRecordSetNavigator();</example>
-        public BrowserCommandResult<bool> CloseRecordSetNavigator(int thinkTime = Constants.DefaultThinkTime)
+        public BrowserCommandResult<bool> EntityCloseRecordSetNavigator(int thinkTime = Constants.DefaultThinkTime)
         {
+            Trace.TraceInformation("Entity.EntityCloseRecordSetNavigator initiated.");
             _client.ThinkTime(thinkTime);
 
             return _client.Execute(_client.GetOptions("Close Record Set Navigator"), driver =>
@@ -1025,17 +1027,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             });
         }
 
-
-
-
-
-
-
-
-
-
-
-
+        #endregion
 
         internal BrowserCommandResult<Field> EntityGetField(string field)
         {
@@ -1063,7 +1055,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
                 return returnField;
             });
         }
-
+        
+        #region Get Value
         internal BrowserCommandResult<string> EntityGetValue(string field)
         {
             Trace.TraceInformation("Entered Entity.EntityGetValue");
@@ -1340,7 +1333,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// <example>xrmApp.Entity.GetValue(new DateTimeControl { Name = "scheduledstart" });</example>
         public BrowserCommandResult<DateTime?> EntityGetValue(DateTimeControl control)
             => _client.Execute($"Get DateTime Value: {control.Name}", driver => DateTimeControl.TryGetValue(_client, control: control));
-
+        #endregion
         /// <summary>
         /// Returns the ObjectId of the entity
         /// </summary>
@@ -1616,6 +1609,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         /// <returns></returns>
         internal BrowserCommandResult<bool> EntitySelectLookup(LookupItem control)
         {
+            Trace.TraceInformation("Entity.EntitySelectLookup initiated.");
             return _client.Execute(_client.GetOptions($"Select Lookup Field {control.Name}"), driver =>
             {
                 if (driver.HasElement(this._entityReference.FieldLookupButton.Replace("[NAME]", control.Name)))
@@ -1639,6 +1633,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<string> EntityGetHeaderValue(LookupItem control)
         {
+            Trace.TraceInformation("Entity.EntityGetHeaderValue initiated with LookupItem Name: " + control.Name);
             var controlName = control.Name;
             return _client.Execute(_client.GetOptions($"Get Header LookupItem Value {controlName}"), driver =>
             {

@@ -67,16 +67,17 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         {
             public const string CustomerServiceCopilot = "CustomerServiceCopilot";
             private string _botContentContainer = "//div[@aria-roledescription=\"message\"]";
-            private string _botContentMarkdown = "//div[@aria-roledescription=\"message\"]//div[contains(@class,\"markdown\")]";
+            private string _botContentMarkdown = "//div[@aria-roledescription=\"message\"]//div[contains(@class,\"webchat__bubble__content\")]//span";
             private string _botContentSources = "//div[@aria-roledescription=\"message\"]//div[contains(@id,\"check-sources\")]//button";
             private string _controlTabs = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl_container\"]//div[@role=\"tablist\"]//button";
             private string _controlId = "//div[@id=\"AppSidePane_MscrmControls.CSIntelligence.AICopilotControl\"]";
             private string _controlButtonId = "//button[@aria-controls=\"AppSidePane_MscrmControls.CSIntelligence.AICopilotControl\"]";
 
             private string _emailAssistControl = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl.MscrmControls.CSIntelligence.EmailAssistControl_container\"]";
-            private string _emailAssistOptions = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl.MscrmControls.CSIntelligence.EmailAssistControl_container\"]//button";
+            private string _emailAssistOptions = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl.MscrmControls.CSIntelligence.EmailAssistControl_container\"]//span[text()=\"[NAME]\"]/ancestor::button";
             private string _emailAssistStartOver = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl.MscrmControls.CSIntelligence.EmailAssistControl_container\"]//button[@data-automationid=\"splitbuttonprimary\"]";
             private string _emailAssistText = "//div[@data-id=\"MscrmControls.CSIntelligence.AICopilotControl.MscrmControls.CSIntelligence.EmailAssistControl_container\"]//textarea[@data-testid=\"txtResponseDescription\"]";
+            ///html/body/div[2]/div/div[4]/div[2]/div/div[2]/div[5]/div/div/div/div/div/div/div[2]/div/div[3]/div[3]/div[2]/div[3]/div[2]/div[2]/div/div/div[2]/div/div[3]/div/div[1]/div[3]/div[2]/div[1]/div/div/div/textarea
             private string _userInput = "//textarea[@data-id=\"webchat-sendbox-input\"]";
             private string _userSubmit = "//div[@class=\"webchat__send-box__main\"]//button";
 
@@ -154,7 +155,6 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                     driver.FindElement(_client.ElementMapper.CustomerServiceCopilotReference.UserInput).SetValue(_client, userInput);
                     driver.FindElement(_client.ElementMapper.CustomerServiceCopilotReference.UserSubmit).Click(_client);
                     driver.Wait();
-                    
 
                     var response = ReadBotResponse(driver);
                     var sources = ReadBotResponseSources(driver);
@@ -179,24 +179,26 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 IElement relatedEntity = null;
 
                 SwitchCustomerServiceCopilotTab(driver, "Write an email");
-                var emailOptions = driver.FindElements(_client.ElementMapper.CustomerServiceCopilotReference.EmailAssistOptions);
+                var emailOptions = driver.FindElements(_client.ElementMapper.CustomerServiceCopilotReference.EmailAssistOptions.Replace("[NAME]", userInput));
                 foreach (var emailOption in emailOptions)
                 {
                     Trace.TraceInformation("Email Option Name: " + emailOption.Text);
                     if (emailOption.Text == userInput)
                     {
-                        driver.FindElement(emailOption.Locator + "[text()='" + userInput + "']").Click(_client);
+                        driver.FindElement(emailOption.Locator.Replace("[NAME]", userInput)).Click(_client);
                         driver.Wait();
                     }
                 }
-                
-                
 
 
-                var response = ReadBotResponse(driver);
-                var sources = ReadBotResponseSources(driver);
-                Trace.TraceInformation("CustomerServiceCopilot.WriteAnEmail finalized.");
-                return response;
+
+
+                var emailResponse = driver.FindElement(_client.ElementMapper.CustomerServiceCopilotReference.EmailAssistText).Text;
+
+                //var response = ReadBotResponse(driver);
+                //var sources = ReadBotResponseSources(driver);
+                //Trace.TraceInformation("CustomerServiceCopilot.AskAQuestion finalized.");
+                return emailResponse;
 
             });
         }

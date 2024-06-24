@@ -14,6 +14,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
     {
 
         [TestCategory("Navigation")]
+        [TestCategory("OpenGlobalSearch")]
         [TestMethod]
         public void TestOpenGlobalSearch()
         {

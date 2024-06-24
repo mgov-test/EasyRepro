@@ -94,7 +94,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
             }
             if (driver.HasElement("//button[contains(@class,'ms-TeachingBubble-closebutton') and @data-is-focusable='true']"))
             {
-                Trace.WriteLine(String.Format("Found {0} Clickable Teaching Bubbles.", driver.FindElements("//button[contains(@class,'ms-TeachingBubble-closebutton') and @data-is-focusable= 'true' and @aria-label='Dismiss']").Count));
+                Trace.WriteLine(String.Format("Found {0} Clickable Teaching Bubbles.", driver.FindElements("//button[contains(@class,'ms-TeachingBubble-closebutton') and @data-is-focusable='true']").Count));
                 foreach (var item in driver.FindElements("//button[contains(@class,'ms-TeachingBubble-closebutton') and @data-is-focusable='true']"))
                 {
                     try

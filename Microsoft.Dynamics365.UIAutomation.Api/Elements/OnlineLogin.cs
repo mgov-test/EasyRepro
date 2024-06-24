@@ -118,6 +118,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
         #region LoginHelpers
         private LoginResult WebLogin(Uri uri, SecureString username, SecureString password, SecureString mfaSecretKey = null, Action<LoginRedirectEventArgs> redirectAction = null)
         {
+            Trace.TraceInformation("OnlineLogin.WebLogin inititated.");
             bool online = !(this.OnlineDomains != null && !this.OnlineDomains.Any(d => uri.Host.EndsWith(d)));
             //driver.Navigate().GoToUrl(uri);
             _client.Browser.Navigate(uri);
@@ -222,6 +223,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         private bool EnterUserName(SecureString username)
         {
+            Trace.TraceInformation("OnlineLogin.EnterUserName inititated.");
             //var input = driver.WaitUntilAvailable(By.XPath(LoginReference.UserId), new TimeSpan(0, 0, 30));
             var input = _client.Browser.Browser.WaitUntilAvailable(_client.ElementMapper.LoginReference.UserId, new TimeSpan(0, 0, 30), "Cannot find User Id");
             if (input == null)
@@ -234,6 +236,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         private void EnterPassword(SecureString password)
         {
+            Trace.TraceInformation("OnlineLogin.EnterPassword inititated.");
             var input = _client.Browser.Browser.FindElement(_client.ElementMapper.LoginReference.LoginPassword);
             input.SetValue(_client, password.ToUnsecureString());
             _client.Browser.Browser.SendKey(input.Locator, Keys.Enter);
@@ -241,6 +244,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         private bool EnterOneTimeCode(SecureString mfaSecretKey)
         {
+            Trace.TraceInformation("OnlineLogin.EnterOneTimeCode inititated.");
             try
             {
                 IElement input = GetOtcInput(); // wait for the dialog, even if key is null, to print the right error
@@ -255,6 +259,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
                 Field objField = new Field(_client);
                 objField.SetInputValue(_client.Browser.Browser, input, oneTimeCode, 1.Seconds());
                 _client.Browser.Browser.SendKey(input.Locator, Keys.Enter);
+                _client.Browser.Browser.Wait(new TimeSpan(0, 0, 20));
                 return true; // input found & code was entered
             }
             catch (Exception e)
@@ -386,6 +391,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         internal BrowserCommandResult<bool> InitializeModes()
         {
+            Trace.TraceInformation("OnlineLogin.InitializeModes inititated.");
             return _client.Execute(_client.GetOptions("Initialize Unified Interface Modes"), driver =>
             {
                 driver.SwitchToFrame("0");
@@ -418,7 +424,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
                     return true;
 
                 var testModeUri = uri + queryParams;
-                driver.Wait(new TimeSpan(0,0,2));
+                
+                Trace.TraceInformation("OnlineLogin.InitializeModes: Navigate.");
                 driver.Navigate(testModeUri);
 
                 // Again wait for loading
@@ -429,6 +436,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
         private NameValueCollection GetUrlQueryParams(string url)
         {
+            Trace.TraceInformation("OnlineLogin.GetUrlQueryParams inititated.");
             if (string.IsNullOrEmpty(url))
                 return null;
 

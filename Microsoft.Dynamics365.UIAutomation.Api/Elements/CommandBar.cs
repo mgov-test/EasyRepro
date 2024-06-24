@@ -88,10 +88,11 @@ namespace Microsoft.Dynamics365.UIAutomation.Api
 
                 if (ribbon == null)
                 {
+                    Trace.TraceInformation("CommandBar.ClickCommand: Ribbon is null. Checking the ContainerGrid");
                     ribbon = driver.WaitUntilAvailable(_client.ElementMapper.CommandBarReference.ContainerGrid,
                         TimeSpan.FromSeconds(5),
                         "Unable to find the ribbon.");
-                    ribbon.Click(_client);
+                    //ribbon.Click(_client);
                 }
 
                 //Is the button in the ribbon?

@@ -141,7 +141,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
         {
             Trace.TraceInformation("[Selenium] Browser has element initated. XPath: " + selector);
             if (_driver.HasElement(By.XPath(selector))){
-                if (_driver.FindElement(By.XPath(selector)).Displayed)
+                if (_driver.FindElement(By.XPath(selector)).Enabled || _driver.FindElement(By.XPath(selector)).Displayed)
                 {
                     return true;
                 }
@@ -261,8 +261,17 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
             }
             else
             {
-                _driver.WaitUntilAvailable(By.Id(locator));
-                _driver.SwitchTo().Frame(locator);
+                try
+                {
+                    _driver.WaitUntilAvailable(By.Id(locator));
+                    _driver.SwitchTo().Frame(locator);
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+
             }
             //_driver.WaitForTransaction();
             

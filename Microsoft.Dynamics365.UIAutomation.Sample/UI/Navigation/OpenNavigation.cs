@@ -18,6 +18,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
         //private readonly Uri _xrmUri = new Uri(System.Configuration.ConfigurationManager.AppSettings["OnlineCrmUrl"]);
 
         [TestCategory("Navigation")]
+        [TestCategory("OpenOptions")]
         [TestMethod]
         public void TestOpenOptions()
         {
@@ -39,6 +40,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
         }
 
         [TestCategory("Navigation")]
+        [TestCategory("OpenGuidedHelp")]
         [TestMethod]
         public void TestOpenGuidedHelp()
         {
@@ -76,6 +78,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
         }
 
         [TestCategory("Navigation")]
+        [TestCategory("OpenToastNotifications")]
         [TestMethod]
         public void TestOpenToastNotifications()
         {

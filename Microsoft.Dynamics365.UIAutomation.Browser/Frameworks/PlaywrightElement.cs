@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,23 +15,34 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
             _element = element;
 
         }
+        private string _tag;
+        private string _locator;
+        private string _id;
+        private string _value;
+        private bool _isAvaiable;
+        private bool _isClickable;
+        private bool _selected;
+        private string _text;
         public string Tag { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Locator { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Value { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsAvailable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsClickable { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool Selected { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Text { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
+        public string Locator { get => _locator; set => _locator = value; }
+        public string Id { get => _element.GetAttributeAsync("id").Result; set => throw new NotImplementedException(); }
+        public string Value { get => _element.InnerTextAsync().GetAwaiter().GetResult(); set => throw new NotImplementedException(); }
+        public bool IsAvailable { get => _element.IsEnabledAsync().Result; set => throw new NotImplementedException(); }
+        public bool IsClickable { get => _element.IsEditableAsync().Result; set => throw new NotImplementedException(); }
+        public bool Selected { get => throw new NotImplementedException(); //_element.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions() { });
+                                                                           set => throw new NotImplementedException(); }
+        public string Text { get => _element.InnerTextAsync().GetAwaiter().GetResult(); set => throw new NotImplementedException(); }
+         
         public void Clear(BrowserPage page, string key)
         {
-            throw new NotImplementedException();
+            Trace.TraceInformation("[Playwright Element] Clear inititated. XPath: " + key);
+            this._element.ClearAsync().GetAwaiter().GetResult();
         }
 
         public void Click(BrowserPage page, bool? click = true)
         {
-            throw new NotImplementedException();
+            Trace.TraceInformation("[Playwright Element] Click inititated.");
+            this._element.ClickAsync().GetAwaiter().GetResult();
         }
 
         public bool ClickWhenAvailable(BrowserPage page, string key)
@@ -75,7 +87,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
 
         public void SetValue(BrowserPage page, string value)
         {
-            throw new NotImplementedException();
+            Trace.TraceInformation("[Playwright Element] Set Value inititated. XPath: " + _locator);
+            _element.FillAsync(value).Wait();
         }
 
         public void Test(BrowserPage page, string value)

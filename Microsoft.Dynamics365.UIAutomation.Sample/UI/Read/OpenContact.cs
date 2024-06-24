@@ -37,6 +37,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
 
         [TestCategory("Grid")]
         [TestCategory("OpenRecordSetNavigator")]
+        [TestCategory("CloseRecordSetNavigator")]
         [TestCategory("RecordSetNavigator")]
         [TestMethod]
         public void TestOpenRecordSetNavigator()
@@ -133,6 +134,9 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample
             }
         }
 
+        [TestCategory("SelectLookup")]
+        [TestCategory("SelectRelatedEntity")]
+        [TestCategory("LookupNew")]
         [TestCategory("Grid")]
         [TestMethod]
         public void TestLookupNew()

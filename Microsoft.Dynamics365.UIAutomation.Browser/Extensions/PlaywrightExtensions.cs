@@ -9,9 +9,20 @@ namespace Microsoft.Dynamics365.UIAutomation.Browser
 {
     public static class PlaywrightExtensions
     {
-        public static IElement ToElement(this ILocator element)
+        public static IElement ToElement(this ILocator element, IPage page, string selector)
         {
-            throw new NotImplementedException("TBD");
+            IElement rtnObject = new PlaywrightElement(element);
+            if (element == null) return null;
+            try
+            {
+                rtnObject.Locator = selector;
+            }
+            catch (Playwright.PlaywrightException staleEx)
+            {
+                return null;
+                //throw;
+            }
+            return rtnObject;
         }
 
     }
